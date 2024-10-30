@@ -2,86 +2,76 @@ import React, { Component } from 'react';
 import NewsItem from './NewsItem'; // Component to render individual news articles
 import { fetch } from 'whatwg-fetch'; // Using fetch polyfill for making HTTP requests
 import Spinner from './Spinner'; // Component to show loading spinner
+import PropTypes from 'prop-types';
 
 export default class News extends Component {
+  static defaultProps = {
+    country: 'us',
+    pagesize: 10,
+    category: 'General',
+  };
+
+  static propTypes = {
+    country: PropTypes.string,
+    pagesize: PropTypes.number,
+    category: PropTypes.string,
+  };
+
   // Initializing state in the constructor
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       articles: [], // Holds the articles fetched from the API
       loading: false, // Indicates if the data is being fetched
       page: 1, // Current page number
     };
+    document.title=` NewsWave ${this.props.category} `;
   }
+
+  // Helper method to fetch data
+  fetchData = async (page) => {
+    const { country, category, pagesize } = this.props;
+    const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=${page}&pageSize=${pagesize}`;
+
+    this.setState({ loading: true });
+    const data = await fetch(url);
+    const parsedData = await data.json();
+
+    this.setState({
+      articles: parsedData.articles,
+      loading: false,
+    });
+  };
 
   // Fetching articles once the component mounts
   async componentDidMount() {
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-25&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&pageSize=${this.props.pagesize}`;
-    this.setState({ loading: true }); // Set loading state to true before making the API call
-    let data = await fetch(url); 
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles }); // Set state with fetched articles and stop loading
+    this.fetchData(this.state.page);
   }
 
-  // Handler function to load page 1 data
-  handleNext1 = async () => {
-    this.setState({ page: 1, loading: true }); // Update state and set loading to true
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-27&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=1&pageSize=${this.props.pagesize}`;
-    let data = await fetch(url); 
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles }); // Update articles and stop loading
-  };
-
-  // Handler function to load page 2 data
-  handleNext2 = async () => {
-    this.setState({ page: 2, loading: true }); // Update state for page 2
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-25&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=2&pageSize=${this.props.pagesize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles }); // Update articles and stop loading
-  };
-
-  // Similar handler functions for pages 3, 4, and 5
-  handleNext3 = async () => {
-    this.setState({ page: 3, loading: true });
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-25&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=3&pageSize=${this.props.pagesize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles });
-  };
-
-  handleNext4 = async () => {
-    this.setState({ page: 4, loading: true });
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-25&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=4&pageSize=${this.props.pagesize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles });
-  };
-
-  handleNext5 = async () => {
-    this.setState({ page: 5, loading: true });
-    let url = `https://newsapi.org/v2/everything?q=apple&from=2024-10-25&to=2024-10-25&sortBy=popularity&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=5&pageSize=${this.props.pagesize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({ loading: false, articles: parsedData.articles });
+  // Generalized page handler function
+  handlePageChange = (page) => {
+    this.setState({ page }, () => this.fetchData(page));
   };
 
   // Render method to display the component
   render() {
     return (
-      <div className='container my-3'>
-        <h2>NewsWave - All articles mentioning Apple</h2>
+      <div className="container-fluid my-3 mx-2">
+        <h2 className="text-center">NewsWave - Top {this.props.category} Headlines</h2>
+
         {/* Display spinner if loading */}
         {this.state.loading && <Spinner />}
+
         <div className="row">
           {/* Map through articles to create NewsItem components */}
           {!this.state.loading && this.state.articles.map((article) => (
-            <div className="col-md-4" key={article.url}>
+            <div className="col-sm-12 col-md-6 col-lg-4" key={article.url}>
               <NewsItem
                 title={article.title ? article.title.slice(0, 45) : ""}
                 description={article.description ? article.description.slice(0, 80) : ""}
                 imageUrl={article.urlToImage}
                 newsUrl={article.url}
+                date={article.publishedAt}
               />
             </div>
           ))}
@@ -90,13 +80,16 @@ export default class News extends Component {
         {/* Pagination buttons */}
         <div className="container d-flex justify-content-center align-items-center">
           <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-            <div className="btn-group mr-2" role="group" aria-label="First group">
-              {/* Buttons to navigate pages */}
-              <button type="button" className="btn btn-secondary" onClick={this.handleNext1}>1</button>
-              <button type="button" className="btn btn-secondary" onClick={this.handleNext2}>2</button>
-              <button type="button" className="btn btn-secondary" onClick={this.handleNext3}>3</button>
-              <button type="button" className="btn btn-secondary" onClick={this.handleNext4}>4</button>
-              <button type="button" className="btn btn-secondary" onClick={this.handleNext5}>5</button>
+            <div className="btn-group mr-2" role="group" aria-label="Page Navigation">
+              {[1, 2, 3, 4, 5].map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  className={`btn btn-secondary ${this.state.page === pageNumber ? 'active' : ''}`}
+                  onClick={() => this.handlePageChange(pageNumber)}>
+                  {pageNumber}
+                </button>
+              ))}
             </div>
           </div>
         </div>
