@@ -62,7 +62,7 @@ export default class News extends Component {
     return (
       <>
         <h2 className="text-center">NewsWave - Top {this.props.category} Headlines</h2>
-        
+        {this.state.loading&& <Spinner/>}
         <InfiniteScroll
           dataLength={this.state.articles.length}
           next={this.fetchMoreData}
