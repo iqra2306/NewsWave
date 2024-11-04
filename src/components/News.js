@@ -1,79 +1,53 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import NewsItem from './NewsItem'; // Component to render individual news articles
 import { fetch } from 'whatwg-fetch'; // Using fetch polyfill for making HTTP requests
 import Spinner from './Spinner'; // Component to show loading spinner
 import PropTypes from 'prop-types';
 import InfiniteScroll from "react-infinite-scroll-component";
 
-export default class News extends Component {
-  static defaultProps = {
-    country: 'us',
-    pagesize: 10,
-    category: 'General',
-  };
+const News = ({ country = 'us', pagesize = 10, category = 'General' }) => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setloading] = useState(false);
+  const [page, setpage] = useState(1);
+  const [totalResults, settotalResults] = useState(0);
 
-  static propTypes = {
-    country: PropTypes.string,
-    pagesize: PropTypes.number,
-    category: PropTypes.string,
-  };
+  document.title = `NewsWave - ${category}`;
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      articles: [], // Holds the articles fetched from the API
-      loading: false, // Indicates if the data is being fetched
-      page: 1, // Current page number
-      totalResults: 0 // Total number of results from the API
-    };
-    document.title = `NewsWave - ${this.props.category}`;
-  }
+  useEffect(() => {
+    setArticles([]);
+    setpage(1);
+    fetchMoreData();
+  }, [category, country]);
 
-  // Fetching articles once the component mounts
-  async componentDidMount() {
-    this.fetchMoreData();
-  }
-
-  // Load more data on scroll
-  fetchMoreData = async () => {
-    const { country, category, pagesize } = this.props;
-    const { page } = this.state;
-    const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=2efc8949c1c649d0a3b4c268b6fd06b5&page=${page}&pageSize=${pagesize}`;
-
-    this.setState({ loading: true });
-    
+  const fetchMoreData = async () => {
     try {
+      const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=${process.env.REACT_APP_NEWS_API_KEY}&page=${page + 1}&pageSize=${pagesize}`;
+      setloading(true);
       const data = await fetch(url);
+      if (!data.ok) throw new Error("Failed to fetch data.");
       const parsedData = await data.json();
-      
-      this.setState({
-        articles: this.state.articles.concat(parsedData.articles || []),
-        loading: false,
-        totalResults: parsedData.totalResults,
-        page: page + 1
-      });
+      setArticles((prevArticles) => prevArticles.concat(parsedData.articles));
+      settotalResults(parsedData.totalResults);
+      setpage((prevPage) => prevPage + 1);
     } catch (error) {
       console.error("Error fetching data:", error);
-      this.setState({ loading: false });
+    } finally {
+      setloading(false);
     }
   };
 
-  render() {
-    return (
-      <>
-        <h2 className="text-center">NewsWave - Top {this.props.category} Headlines</h2>
-        {this.state.loading&& <Spinner/>}
-        <InfiniteScroll
-          dataLength={this.state.articles.length}
-          next={this.fetchMoreData}
-          hasMore={this.state.articles.length < this.state.totalResults}
-          loader={<Spinner />}
-        >
-          <div className="container">
-
-          
+  return (
+    <>
+      <h2 className="text-center" style={{marginTop:'5rem'}}>NewsWave - Top {category} Headlines</h2>
+      {loading && <Spinner />}
+      <InfiniteScroll
+        dataLength={articles.length}
+        next={fetchMoreData}
+        hasMore={articles.length < totalResults}
+        loader={loading && <Spinner />}>
+        <div className="container">
           <div className="row">
-            {this.state.articles.map((article) => (
+            {articles.map((article) => (
               <div className="col-sm-12 col-md-6 col-lg-4" key={article.url}>
                 <NewsItem
                   title={article.title ? article.title.slice(0, 45) : ""}
@@ -85,9 +59,15 @@ export default class News extends Component {
               </div>
             ))}
           </div>
-          </div>
-        </InfiniteScroll>
-      </>
-    );
-  }
-}
+        </div>
+      </InfiniteScroll>
+    </>
+  );
+};
+
+News.propTypes = {
+  country: PropTypes.string,
+  pagesize: PropTypes.number,
+  category: PropTypes.string,
+};
+export default News;
