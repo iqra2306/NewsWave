@@ -7,7 +7,7 @@ const NewsItem = (props) => {
     <div>
       <div className="card mx-2 my-3" >
         <img
-          className="card-img-top" src={imageUrl ? imageUrl : "images.png"} alt="Card cap" />
+          className="card-img-top" src={imageUrl ? imageUrl : "image2.png"} alt="Card cap" />
         <div className="card-body">
           <a href={newsUrl}><h5 className="card-title" >{title}...</h5></a>
           <p className="card-text">{description}...</p>
