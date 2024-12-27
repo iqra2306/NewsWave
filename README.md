@@ -56,8 +56,7 @@ A responsive React application built using Bootstrap that brings you the latest 
 ---
 
 ## Usage  
-
-- Select your country from the dropdown to see news specific to that region.  
+ 
 - Filter news articles by categories such as Business, Technology, Health, and more.  
 - Click on any article to read the full story on its original source.  
 
