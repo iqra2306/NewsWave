@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import NewsItem from './NewsItem'; // Component to render individual news articles
-import { fetch } from 'whatwg-fetch';// Fetch polyfill for making HTTP requests
+//import { fetch } from 'whatwg-fetch';// Fetch polyfill for making HTTP requests
 import Spinner from './Spinner';// Component to show a loading spinner
 import PropTypes from 'prop-types';// Prop types for validating component props
 import InfiniteScroll from "react-infinite-scroll-component";// Infinite scroll component for loading more data on scroll
@@ -26,7 +26,9 @@ const News = ({ country = 'us', pagesize = 10, category = 'General' }) => {
     try {
       setLoading(true);
       const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=${process.env.REACT_APP_NEWS_API_KEY}&page=${page}&pageSize=${pagesize}`;
-      
+      console.log("API URL:", url);
+      console.log("API Key:", process.env.REACT_APP_NEWS_API_KEY);
+
       const data = await fetch(url);
       if (!data.ok) throw new Error("Failed to fetch data.");
       const parsedData = await data.json();
@@ -79,5 +81,6 @@ News.propTypes = {
   pagesize: PropTypes.number,
   category: PropTypes.string,
 };
+
 
 export default News;
